@@ -1,0 +1,102 @@
+!!!5
+html(lang="ja")
+extends layout
+block content
+	link(href="/stylesheets/style.css", rel="stylesheet")
+	script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js')
+	script(src='http://maps.googleapis.com/maps/api/js?key=yourAPIKey&sensor=true')
+	script(src='/socket.io/socket.io.js')
+	script(type='text/javascript')
+
+		// map object
+		var map;
+
+		// add chat log
+		function addlog(data){
+			setMarker(data.lat, data.lng);
+			$("#log").append("<li>" + data.lat + " , " + data.lng + "</li>");
+		}
+		// 接続
+		var socket = io.connect('http://10.0.1.8:3000/chat');
+
+		// データ受信
+		socket.on('chat.list', function(list) {
+			for(var i = 0; i < list.length; i++){
+				addlog(list[i]);
+			}
+		});
+
+		// データ送信
+		socket.on('chat.add', function(data){
+			addlog(data);
+		});
+
+		// 送信メソッド
+		function send(currentLatLng){
+			//緯度経度を送信
+			socket.emit('chat.add', {
+				lat : currentLatLng["lat"],
+				lng : currentLatLng["lng"]
+			});
+			return false;
+		}
+
+		function getGeo(){
+			navigator.geolocation.getCurrentPosition(function(position) {
+				var currentLatLng = new Array();
+				// 成功時の処理
+				currentLatLng["lat"] = position.coords.latitude;
+				currentLatLng["lng"] = position.coords.longitude;
+				send(currentLatLng);
+
+			}, function(code) {
+				// エラー時の処理
+			});
+		}
+
+		// Google Maps API
+		function initMap(){
+			navigator.geolocation.getCurrentPosition(function(position) {
+				var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+				var mapOptions = {
+					zoom: 15,
+					center: latlng,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				}
+				map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+
+				var marker = new google.maps.Marker({
+					position: latlng,
+					map: map,
+					title: 'Hello World!'
+				});
+			}, function(code) {
+				// エラー時の処理
+			});
+		}
+
+		// set Marker
+		function setMarker(lat, lang){
+			var latlng = new google.maps.LatLng(lat,lang);
+			var marker = new google.maps.Marker({
+				position: latlng,
+				map: map,
+				title: 'Hello World!'
+			});
+		}
+
+		$(document).ready(function(){
+			initMap();
+		});
+	div#container
+		h1 Mapping Position
+		div#buttonArea
+			button#Black(
+			  type='submit'
+			  onclick='getGeo()'
+			) Put My Position
+		div#map_canvas
+
+		div
+			h3 Marker position log
+			ul#log
