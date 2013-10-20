@@ -72,5 +72,5 @@ io
 });
 
 app.get('/socket', function(req, res){
-	res.render('socketio', {title: 'Socket.IO DEMO'});
+	res.render('socketio', {title: 'Mapping Position'});
 });

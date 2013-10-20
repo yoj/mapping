@@ -4,20 +4,23 @@ extends layout
 block content
 	link(href="/stylesheets/style.css", rel="stylesheet")
 	script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js')
-	script(src='http://maps.googleapis.com/maps/api/js?key=yourAPIKey&sensor=true')
+	script(src='http://maps.googleapis.com/maps/api/js?key=YOURKEY&sensor=true')
 	script(src='/socket.io/socket.io.js')
 	script(type='text/javascript')
 
 		// map object
 		var map;
+		// marker potions before setting
+		var markers = new Array();
 
 		// add chat log
 		function addlog(data){
+			markers.push(data);
 			setMarker(data.lat, data.lng);
 			$("#log").append("<li>" + data.lat + " , " + data.lng + "</li>");
 		}
 		// 接続
-		var socket = io.connect('http://10.0.1.8:3000/chat');
+		var socket = io.connect('http://localhost:3000/chat');
 
 		// データ受信
 		socket.on('chat.list', function(list) {
@@ -65,11 +68,13 @@ block content
 				}
 				map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
 
-				var marker = new google.maps.Marker({
-					position: latlng,
-					map: map,
-					title: 'Hello World!'
-				});
+				if(markers.length > 0){
+					for(var i = 0; i < markers.length; i++){
+						setMarker(markers[i].lat, markers[i].lng);
+					}
+				}else{
+					setMarker(position.coords.latitude, position.coords.longitude);
+				}
 			}, function(code) {
 				// エラー時の処理
 			});
@@ -77,6 +82,7 @@ block content
 
 		// set Marker
 		function setMarker(lat, lang){
+			console.log(map);
 			var latlng = new google.maps.LatLng(lat,lang);
 			var marker = new google.maps.Marker({
 				position: latlng,
